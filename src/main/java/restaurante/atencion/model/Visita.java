@@ -4,6 +4,7 @@ package restaurante.atencion.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import restaurante.atencion.exception.PedidoEnVisitaCerradaException;
 
 public class Visita {
 
