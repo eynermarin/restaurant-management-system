@@ -11,12 +11,44 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
     private ControladorMenu controladorMenu;
 
+    private restaurante.atencion.control.ControladorAtencion controladorAtencion;
+    private restaurante.atencion.view.PanelMesas panelMesas;
+    private restaurante.atencion.view.PanelPedidos panelPedidos;
+    private restaurante.atencion.view.PanelCuenta panelCuenta;
+
     public VentanaPrincipal() {
         initComponents();
         controladorMenu = new ControladorMenu();
         panelAdministracion.setControlador(controladorMenu);
         panelBusqueda.setControlador(controladorMenu);
         panelRecomendaciones.setControlador(controladorMenu);
+
+        // Inicializar el modulo de atencion
+        controladorAtencion = new restaurante.atencion.control.ControladorAtencion(
+            controladorMenu.getConsultaMenu()
+        );
+
+        // Impedir eliminar opciones del menu que esten en pedidos
+        controladorMenu.setVerificadorUso(controladorAtencion.getServicio());
+
+        // Crear las tres pantallas
+        panelMesas = new restaurante.atencion.view.PanelMesas();
+        panelPedidos = new restaurante.atencion.view.PanelPedidos();
+        panelCuenta = new restaurante.atencion.view.PanelCuenta();
+
+        // Compartir el mismo controlador
+        panelMesas.setControlador(controladorAtencion);
+        panelPedidos.setControlador(controladorAtencion);
+        panelCuenta.setControlador(controladorAtencion);
+
+        // Incorporar las pantallas a la ventana principal
+        pestanas.addTab("Mesas", panelMesas);
+        pestanas.addTab("Pedidos", panelPedidos);
+        pestanas.addTab("Cuentas", panelCuenta);
+
+        // Ajustar el tamano para mostrar los formularios
+        pestanas.setPreferredSize(new java.awt.Dimension(1150, 750));
+        pack();
         // Cuando atención esté lista: pasarle controladorMenu.getConsultaMenu()
         // y registrar su verificador con controladorMenu.setVerificadorUso(...)
         setLocationRelativeTo(null);
@@ -59,6 +91,18 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         panelAdministracion.refrescar();
         panelBusqueda.refrescar();
         panelRecomendaciones.refrescar();
+
+        if (panelMesas != null) {
+            panelMesas.refrescar();
+        }
+
+        if (panelPedidos != null) {
+            panelPedidos.refrescar();
+        }
+
+        if (panelCuenta != null) {
+            panelCuenta.refrescar();
+        }
     }//GEN-LAST:event_pestanasStateChanged
 
     /**
