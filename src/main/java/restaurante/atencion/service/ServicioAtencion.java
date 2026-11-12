@@ -6,14 +6,18 @@ import java.util.ArrayList;
 
 import restaurante.atencion.model.*;
 import restaurante.atencion.exception.*;
+import restaurante.atencion.observador.*;
+import restaurante.atencion.pago.*;
 import restaurante.compartido.ConsultaMenu;
 import restaurante.compartido.VerificadorUsoOpcion;
 import restaurante.menu.model.OpcionMenu;
+import restaurante.menu.exception.DatoMenuInvalidoException;
 
 public class ServicioAtencion implements VerificadorUsoOpcion {
 
     private final ArrayList<Mesa> mesas;
     private final ArrayList<Visita> historial;
+    private final ArrayList<ObservadorVisita> observadores;
     private final ConsultaMenu menu;
 
     private int siguientePedido;
@@ -30,6 +34,7 @@ public class ServicioAtencion implements VerificadorUsoOpcion {
         this.menu = menu;
         this.mesas = new ArrayList<>();
         this.historial = new ArrayList<>();
+        this.observadores = new ArrayList<>();
 
         this.siguientePedido = 1;
         this.siguientePago = 1;
@@ -38,6 +43,10 @@ public class ServicioAtencion implements VerificadorUsoOpcion {
             mesas.add(new Mesa(i));
         }
     }
+
+    // =========================
+    // GESTION DE MESAS
+    // =========================
 
     public ArrayList<Mesa> getMesas() {
         return new ArrayList<>(mesas);
@@ -67,9 +76,17 @@ public class ServicioAtencion implements VerificadorUsoOpcion {
         mesa.abrirVisita(mesero, clientes);
     }
 
+    // =========================
+    // GESTION DEL MENU
+    // =========================
+
     public ArrayList<OpcionMenu> obtenerMenu() {
         return menu.opcionesDisponibles();
     }
+
+    // =========================
+    // GESTION DE PEDIDOS
+    // =========================
 
     public void agregarPedido(int numeroMesa,
                               String alias,
@@ -84,16 +101,17 @@ public class ServicioAtencion implements VerificadorUsoOpcion {
             );
         }
 
-OpcionMenu opcion;
+        OpcionMenu opcion;
 
-try {
-    opcion = menu.buscarOpcion(idOpcion);
-} catch (restaurante.menu.exception.DatoMenuInvalidoException e) {
-    throw new IllegalArgumentException(
-        "La opcion del menu no existe: " + idOpcion,
-        e
-    );
-}
+        try {
+            opcion = menu.buscarOpcion(idOpcion);
+        } catch (DatoMenuInvalidoException e) {
+            throw new IllegalArgumentException(
+                "La opcion del menu no existe: " + idOpcion,
+                e
+            );
+        }
+
         if (!opcion.isDisponible()) {
             throw new IllegalArgumentException(
                 "La opcion del menu no esta disponible."
@@ -118,6 +136,8 @@ try {
 
         mesa.agregarPedido(pedido);
         siguientePedido++;
+
+        notificarPedido(numeroMesa, pedido);
     }
 
     public void anularPedido(int numeroMesa,
@@ -146,6 +166,10 @@ try {
         return mesa.getVisitaActual().calcularTotal();
     }
 
+    // =========================
+    // CUENTAS Y PAGOS
+    // =========================
+
     public void solicitarCuenta(int numeroMesa,
                                 ModalidadCuenta modalidad) {
 
@@ -167,17 +191,66 @@ try {
             );
         }
 
+        if (metodo == null) {
+            throw new PagoInvalidoException(
+                "Debe seleccionar un metodo de pago."
+            );
+        }
+
+        MetodoPago tipoPago;
+
+        switch (metodo.trim().toUpperCase()) {
+            case "EFECTIVO":
+                tipoPago = new PagoEfectivo();
+                break;
+
+            case "TARJETA":
+                tipoPago = new PagoTarjeta();
+                break;
+
+            default:
+                throw new PagoInvalidoException(
+                    "Metodo de pago no disponible."
+                );
+        }
+
+        Visita visita = mesa.getVisitaActual();
+
         try {
+            BigDecimal saldo;
+
+            if (visita.getModalidadCuenta()
+                    == ModalidadCuenta.INDIVIDUAL) {
+
+                if (alias == null || alias.trim().isEmpty()) {
+                    throw new PagoInvalidoException(
+                        "Debe seleccionar un comensal."
+                    );
+                }
+
+                saldo = visita.saldoComensal(alias);
+
+            } else {
+                saldo = visita.saldoPendiente();
+            }
+
+            tipoPago.validar(monto, saldo);
+
+            String referenciaFinal =
+                tipoPago.generarReferencia(referencia);
+
             Pago pago = new Pago(
                 siguientePago,
-                metodo,
+                tipoPago.getNombre(),
                 monto,
-                referencia,
+                referenciaFinal,
                 alias
             );
 
             mesa.registrarPago(pago);
             siguientePago++;
+
+            notificarPago(numeroMesa, pago);
 
         } catch (IllegalArgumentException e) {
             throw new PagoInvalidoException(e.getMessage());
@@ -202,7 +275,13 @@ try {
         Visita visita = mesa.cerrarVisita();
 
         historial.add(visita);
+
+        notificarCierre(numeroMesa, visita);
     }
+
+    // =========================
+    // INTEGRACION CON EL MENU
+    // =========================
 
     @Override
     public boolean opcionUsadaEnPedidos(int idOpcion) {
@@ -211,7 +290,8 @@ try {
 
             Visita visita = mesa.getVisitaActual();
 
-            if (visita != null && contieneOpcion(visita, idOpcion)) {
+            if (visita != null &&
+                    contieneOpcion(visita, idOpcion)) {
                 return true;
             }
         }
@@ -234,5 +314,47 @@ try {
         }
 
         return false;
+    }
+
+    // =========================
+    // PATRON OBSERVER
+    // =========================
+
+    public void agregarObservador(ObservadorVisita observador) {
+
+        if (observador == null) {
+            throw new IllegalArgumentException(
+                "El observador no puede ser nulo."
+            );
+        }
+
+        if (!observadores.contains(observador)) {
+            observadores.add(observador);
+        }
+    }
+
+    public void eliminarObservador(ObservadorVisita observador) {
+        observadores.remove(observador);
+    }
+
+    private void notificarPedido(int numeroMesa, ItemPedido pedido) {
+
+        for (ObservadorVisita observador : observadores) {
+            observador.pedidoRegistrado(numeroMesa, pedido);
+        }
+    }
+
+    private void notificarPago(int numeroMesa, Pago pago) {
+
+        for (ObservadorVisita observador : observadores) {
+            observador.pagoRegistrado(numeroMesa, pago);
+        }
+    }
+
+    private void notificarCierre(int numeroMesa, Visita visita) {
+
+        for (ObservadorVisita observador : observadores) {
+            observador.visitaCerrada(numeroMesa, visita);
+        }
     }
 }
