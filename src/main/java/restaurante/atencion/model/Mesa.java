@@ -23,8 +23,7 @@ public class Mesa {
         this.estado = new MesaDisponible();
     }
 
-    public void abrirVisita(String mesero,
-                            ArrayList<String> alias) {
+    public void abrirVisita(String mesero, ArrayList<String> alias) {
         estado.abrirVisita(this, mesero, alias);
     }
 
@@ -47,7 +46,10 @@ public class Mesa {
     public void iniciarVisita(Visita visita) {
 
         if (visitaActual != null || visita == null
-                || !estaDisponible()) {
+                || !estaDisponible()
+                || visita.isCerrada()
+                || visita.isCuentaSolicitada()) {
+
             throw new IllegalStateException(
                 "No se puede iniciar la visita."
             );
@@ -58,7 +60,10 @@ public class Mesa {
 
     public void finalizarVisita() {
 
-        if (visitaActual == null || !visitaActual.isCerrada()) {
+        if (!(estado instanceof MesaPendientePago)
+                || visitaActual == null
+                || !visitaActual.isCerrada()) {
+
             throw new IllegalStateException(
                 "No se puede liberar la mesa."
             );
@@ -72,6 +77,39 @@ public class Mesa {
         if (nuevoEstado == null) {
             throw new IllegalArgumentException(
                 "El estado no puede ser nulo."
+            );
+        }
+
+        boolean valida = false;
+
+        // Disponible -> Ocupada
+        if (estado instanceof MesaDisponible
+                && nuevoEstado instanceof MesaOcupada) {
+
+            valida = visitaActual != null
+                    && !visitaActual.isCerrada()
+                    && !visitaActual.isCuentaSolicitada();
+        }
+
+        // Ocupada -> Pendiente de pago
+        else if (estado instanceof MesaOcupada
+                && nuevoEstado instanceof MesaPendientePago) {
+
+            valida = visitaActual != null
+                    && visitaActual.isCuentaSolicitada()
+                    && !visitaActual.isCerrada();
+        }
+
+        // Pendiente de pago -> Disponible
+        else if (estado instanceof MesaPendientePago
+                && nuevoEstado instanceof MesaDisponible) {
+
+            valida = visitaActual == null;
+        }
+
+        if (!valida) {
+            throw new IllegalStateException(
+                "Transicion de estado no permitida."
             );
         }
 

@@ -67,7 +67,7 @@ public class ItemPedido {
         );
     }
 
-    public void anular(String motivo) {
+    void anular(String motivo) {
         if (anulado) {
             throw new IllegalStateException(
                 "Este articulo ya fue anulado."
