@@ -21,6 +21,18 @@ public class Visita {
     private boolean cerrada;
 
     public Visita(String mesero, ArrayList<String> alias) {
+        this(mesero, alias, LocalDateTime.now());
+    }
+
+    /** Igual que el anterior, pero con la fecha de apertura indicada (para datos de ejemplo). */
+    public Visita(String mesero, ArrayList<String> alias,
+                  LocalDateTime fechaApertura) {
+
+        if (fechaApertura == null) {
+            throw new IllegalArgumentException(
+                "La fecha de apertura es obligatoria."
+            );
+        }
 
         if (mesero == null || mesero.trim().isEmpty()) {
             throw new IllegalArgumentException(
@@ -35,7 +47,7 @@ public class Visita {
         }
 
         this.mesero = mesero.trim();
-        this.fechaApertura = LocalDateTime.now();
+        this.fechaApertura = fechaApertura;
 
         this.comensales = new ArrayList<>();
         this.pedidos = new ArrayList<>();
@@ -276,6 +288,17 @@ public class Visita {
     }
 
     public void cerrarVisita() {
+        cerrarVisita(LocalDateTime.now());
+    }
+
+    /** Igual que el anterior, pero con la fecha de cierre indicada (para datos de ejemplo). */
+    public void cerrarVisita(LocalDateTime fechaCierre) {
+
+        if (fechaCierre == null) {
+            throw new IllegalArgumentException(
+                "La fecha de cierre es obligatoria."
+            );
+        }
 
         if (!cuentaSolicitada || cerrada) {
             throw new IllegalStateException(
@@ -290,7 +313,7 @@ public class Visita {
         }
 
         this.cerrada = true;
-        this.fechaCierre = LocalDateTime.now();
+        this.fechaCierre = fechaCierre;
     }
 
     public ArrayList<Comensal> getComensales() {

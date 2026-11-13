@@ -30,6 +30,7 @@ public class PanelPedidos extends JPanel {
 
     private JLabel etiquetaTotal;
     private JLabel etiquetaSubtotal;
+    private JLabel etiquetaCategorias;
 
     public PanelPedidos() {
 
@@ -169,7 +170,15 @@ public class PanelPedidos extends JPanel {
         panelTotales.add(etiquetaSubtotal);
         panelTotales.add(etiquetaTotal);
 
-        panelInferior.add(panelTotales, BorderLayout.SOUTH);
+        // Subtotal por categoria (enunciado 3.3)
+        etiquetaCategorias = new JLabel(" ");
+        etiquetaCategorias.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel panelResumen = new JPanel(new GridLayout(2, 1));
+        panelResumen.add(panelTotales);
+        panelResumen.add(etiquetaCategorias);
+
+        panelInferior.add(panelResumen, BorderLayout.SOUTH);
 
         add(panelInferior, BorderLayout.SOUTH);
 
@@ -278,6 +287,7 @@ public class PanelPedidos extends JPanel {
         if (numero == null) {
             etiquetaTotal.setText("Total mesa: 0");
             etiquetaSubtotal.setText("Subtotal: 0");
+            etiquetaCategorias.setText(" ");
             return;
         }
 
@@ -298,6 +308,10 @@ public class PanelPedidos extends JPanel {
 
         etiquetaTotal.setText(
             "Total mesa: " + controlador.totalMesa(numero)
+        );
+
+        etiquetaCategorias.setText(
+            "Por categoría: " + controlador.subtotalesPorCategoria(numero)
         );
 
         actualizarSubtotal();

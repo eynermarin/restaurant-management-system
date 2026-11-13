@@ -255,6 +255,13 @@ public class PanelCuenta extends JPanel {
             return;
         }
 
+        // Si ya se pidió la cuenta, mostrar la modalidad que se eligió
+        if (visita.getModalidadCuenta() == ModalidadCuenta.INDIVIDUAL) {
+            radioIndividual.setSelected(true);
+        } else if (visita.getModalidadCuenta() == ModalidadCuenta.CONJUNTA) {
+            radioConjunta.setSelected(true);
+        }
+
         for (Comensal comensal : visita.getComensales()) {
 
             String alias = comensal.getAlias();

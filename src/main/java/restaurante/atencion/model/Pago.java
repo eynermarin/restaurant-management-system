@@ -16,6 +16,20 @@ public class Pago {
     public Pago(int id, String metodo, BigDecimal monto,
                 String referencia, String aliasComensal) {
 
+        this(id, metodo, monto, referencia, aliasComensal, LocalDateTime.now());
+    }
+
+    /** Igual que el anterior, pero con la fecha del pago indicada (para datos de ejemplo). */
+    public Pago(int id, String metodo, BigDecimal monto,
+                String referencia, String aliasComensal,
+                LocalDateTime fechaPago) {
+
+        if (fechaPago == null) {
+            throw new IllegalArgumentException(
+                "La fecha del pago es obligatoria."
+            );
+        }
+
         if (id <= 0) {
             throw new IllegalArgumentException(
                 "El identificador del pago debe ser positivo."
@@ -47,7 +61,7 @@ public class Pago {
         this.referencia = referencia.trim();
         this.aliasComensal = aliasComensal == null
                 ? null : aliasComensal.trim();
-        this.fechaPago = LocalDateTime.now();
+        this.fechaPago = fechaPago;
     }
 
     public int getId() {

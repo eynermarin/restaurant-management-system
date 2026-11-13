@@ -14,7 +14,10 @@ public class BitacoraEventos implements ObservadorVisita {
     }
 
     private void agregarEvento(String mensaje) {
-        eventos.add(LocalDateTime.now() + " - " + mensaje);
+        String hora = LocalDateTime.now().format(
+            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+        );
+        eventos.add(hora + " - " + mensaje);
     }
 
     @Override

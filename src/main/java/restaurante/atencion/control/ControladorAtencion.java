@@ -118,6 +118,40 @@ public class ControladorAtencion {
         return visita.subtotalComensal(alias);
     }
 
+    /**
+     * Subtotal de la mesa por categoría (sin contar anulados), en texto para la
+     * pantalla. Por ejemplo: "Proteínas: 9000 · Bebidas: 800".
+     */
+    public String subtotalesPorCategoria(int numeroMesa) {
+
+        Visita visita = visitaActual(numeroMesa);
+
+        if (visita == null) {
+            return "";
+        }
+
+        ArrayList<String> categorias = new ArrayList<>();
+
+        for (ItemPedido pedido : visita.getPedidos()) {
+            if (!pedido.isAnulado()
+                    && !categorias.contains(pedido.getCategoria())) {
+                categorias.add(pedido.getCategoria());
+            }
+        }
+
+        String texto = "";
+
+        for (String categoria : categorias) {
+            if (!texto.isEmpty()) {
+                texto = texto + " · ";
+            }
+            texto = texto + categoria + ": "
+                    + visita.subtotalCategoria(categoria);
+        }
+
+        return texto;
+    }
+
     // =========================
     // CUENTAS Y PAGOS
     // =========================

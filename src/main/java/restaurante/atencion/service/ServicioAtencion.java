@@ -279,6 +279,21 @@ public class ServicioAtencion implements VerificadorUsoOpcion {
         notificarCierre(numeroMesa, visita);
     }
 
+    /**
+     * Agrega al historial una visita que ya fue cerrada fuera de una mesa.
+     * Se usa para cargar los datos de ejemplo de las estadísticas.
+     */
+    public void registrarVisitaHistorica(Visita visita) {
+
+        if (visita == null || !visita.isCerrada()) {
+            throw new IllegalArgumentException(
+                "Solo se pueden agregar al historial visitas cerradas."
+            );
+        }
+
+        historial.add(visita);
+    }
+
     // =========================
     // INTEGRACION CON EL MENU
     // =========================

@@ -3,9 +3,9 @@ package restaurante;
 import restaurante.menu.control.ControladorMenu;
 
 /**
- * Ventana principal con una pestaña por pantalla. Es compartida: aquí también se
- * agregarán las pestañas del módulo de atención (Persona 1).
- * Hecha con el GUI Builder de NetBeans (ver VentanaPrincipal.form).
+ * Ventana principal con una pestaña por pantalla. Las 3 del menú vienen del
+ * GUI Builder (ver VentanaPrincipal.form); las de atención y estadísticas se
+ * agregan en el constructor, donde también se conectan los dos módulos.
  */
 public class VentanaPrincipal extends javax.swing.JFrame {
 
@@ -15,6 +15,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private restaurante.atencion.view.PanelMesas panelMesas;
     private restaurante.atencion.view.PanelPedidos panelPedidos;
     private restaurante.atencion.view.PanelCuenta panelCuenta;
+    private restaurante.atencion.view.PanelEstadisticas panelEstadisticas;
 
     public VentanaPrincipal() {
         initComponents();
@@ -31,6 +32,11 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         // Impedir eliminar opciones del menu que esten en pedidos
         controladorMenu.setVerificadorUso(controladorAtencion.getServicio());
 
+        // Visitas cerradas de ejemplo para que las estadisticas tengan datos
+        restaurante.atencion.service.DatosAtencionIniciales.cargar(
+            controladorAtencion.getServicio(), controladorMenu.getConsultaMenu()
+        );
+
         // Crear las tres pantallas
         panelMesas = new restaurante.atencion.view.PanelMesas();
         panelPedidos = new restaurante.atencion.view.PanelPedidos();
@@ -46,11 +52,16 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         pestanas.addTab("Pedidos", panelPedidos);
         pestanas.addTab("Cuentas", panelCuenta);
 
+        // Estadisticas sobre el historial de visitas cerradas
+        panelEstadisticas = new restaurante.atencion.view.PanelEstadisticas();
+        panelEstadisticas.setControlador(
+            new restaurante.atencion.control.ControladorEstadisticas(controladorAtencion.getServicio())
+        );
+        pestanas.addTab("Estadísticas", panelEstadisticas);
+
         // Ajustar el tamano para mostrar los formularios
         pestanas.setPreferredSize(new java.awt.Dimension(1150, 750));
         pack();
-        // Cuando atención esté lista: pasarle controladorMenu.getConsultaMenu()
-        // y registrar su verificador con controladorMenu.setVerificadorUso(...)
         setLocationRelativeTo(null);
     }
 
@@ -102,6 +113,10 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         if (panelCuenta != null) {
             panelCuenta.refrescar();
+        }
+
+        if (panelEstadisticas != null) {
+            panelEstadisticas.refrescar();
         }
     }//GEN-LAST:event_pestanasStateChanged
 

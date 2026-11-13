@@ -24,6 +24,22 @@ public class ItemPedido {
             String categoria, int cantidad,
             BigDecimal precioUnitario) {
 
+        this(id, aliasComensal, idOpcion, nombreOpcion,
+            categoria, cantidad, precioUnitario, LocalDateTime.now());
+    }
+
+    /** Igual que el anterior, pero con la fecha del pedido indicada (para datos de ejemplo). */
+    public ItemPedido(int id, String aliasComensal,
+            int idOpcion, String nombreOpcion,
+            String categoria, int cantidad,
+            BigDecimal precioUnitario, LocalDateTime fechaPedido) {
+
+        if (fechaPedido == null) {
+            throw new IllegalArgumentException(
+                "La fecha del pedido es obligatoria."
+            );
+        }
+
         if (id <= 0 || idOpcion <= 0 || cantidad <= 0) {
             throw new IllegalArgumentException(
                 "El identificador y la cantidad deben ser positivos."
@@ -52,7 +68,7 @@ public class ItemPedido {
         this.categoria = categoria.trim();
         this.cantidad = cantidad;
         this.precioUnitario = precioUnitario;
-        this.fechaPedido = LocalDateTime.now();
+        this.fechaPedido = fechaPedido;
 
         this.anulado = false;
     }
